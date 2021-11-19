@@ -1,0 +1,29 @@
+name: Perform check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 * * * *"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Test
+        run: go test
+
+      - name: Notify
+        if: ${{ failure() }}
+        run: |
+          curl --request POST --header "Content-Type: application/json" ${{ secrets.NOTIFY_URL }} -d '{ "content": "The mtg-goats tests failed."}'
